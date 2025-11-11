@@ -1,0 +1,5 @@
+export { default as UserFilters } from './UserFilters'
+export { default as UserTable } from './UserTable'
+export { default as PaginationComponent } from './PaginationComponent'
+export { default as CartModal } from './CartModal'
+export { default as ConfirmPurchaseModal } from './ConfirmPurchaseModal'
