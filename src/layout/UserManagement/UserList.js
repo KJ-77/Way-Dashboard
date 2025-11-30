@@ -20,11 +20,15 @@ import {
   CInputGroup,
   CInputGroupText,
 } from '@coreui/react'
+import { useNavigate } from 'react-router-dom'
 import { api } from 'src/services/api'
 import CartModal from './components/CartModal'
 import OrdersModal from './components/OrdersModal'
+import ConfirmDeleteModal from '../../components/common/ConfirmDeleteModal'
 
 const UserList = () => {
+  const navigate = useNavigate()
+
   // State
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -38,6 +42,11 @@ const UserList = () => {
     totalItems: 0,
     totalPages: 0,
   })
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [userToDelete, setUserToDelete] = useState(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // Cart states
   const [selectedUser, setSelectedUser] = useState(null)
@@ -209,6 +218,52 @@ const UserList = () => {
     loadUserOrders(user._id)
   }
 
+  // Handle create user
+  const handleCreateUser = () => {
+    navigate('/users/new')
+  }
+
+  // Handle edit user
+  const handleEditUser = (userId) => {
+    navigate(`/users/${userId}/edit`)
+  }
+
+  // Handle delete user click
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user)
+    setShowDeleteModal(true)
+  }
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return
+
+    try {
+      setDeleteLoading(true)
+      await api.delete(`/admin/regular-users/${userToDelete._id}`)
+
+      // Reload users list
+      await loadUsers()
+
+      // Close modal and reset state
+      setShowDeleteModal(false)
+      setUserToDelete(null)
+    } catch (err) {
+      console.error('Error deleting user:', err)
+      setError(`Failed to delete user: ${err.message}`)
+      setShowDeleteModal(false)
+      setUserToDelete(null)
+    } finally {
+      setDeleteLoading(false)
+    }
+  }
+
+  // Handle delete cancel
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false)
+    setUserToDelete(null)
+  }
+
   // Get verification badge color
   const getVerificationBadge = (verified) => {
     return verified
@@ -271,15 +326,25 @@ const UserList = () => {
       React.createElement(
         CCardHeader,
         { key: 'header' },
-        React.createElement(
-          CRow,
-          {},
+        React.createElement(CRow, {}, [
           React.createElement(
             CCol,
-            {},
+            { key: 'title' },
             React.createElement('h5', {}, 'User Management'),
           ),
-        ),
+          React.createElement(
+            CCol,
+            { xs: 'auto', key: 'actions' },
+            React.createElement(
+              CButton,
+              {
+                color: 'primary',
+                onClick: handleCreateUser,
+              },
+              'Create User',
+            ),
+          ),
+        ]),
       ),
       React.createElement(CCardBody, { key: 'body' }, [
         error &&
@@ -465,13 +530,35 @@ const UserList = () => {
                             React.createElement(
                               CButton,
                               {
+                                color: 'warning',
+                                size: 'sm',
+                                className: 'me-2',
+                                onClick: () => handleEditUser(user._id),
+                                key: 'edit',
+                              },
+                              'Edit',
+                            ),
+                            React.createElement(
+                              CButton,
+                              {
+                                color: 'danger',
+                                size: 'sm',
+                                className: 'me-2',
+                                onClick: () => handleDeleteClick(user),
+                                key: 'delete',
+                              },
+                              'Delete',
+                            ),
+                            React.createElement(
+                              CButton,
+                              {
                                 color: 'info',
                                 size: 'sm',
                                 className: 'me-2',
                                 onClick: () => handleViewCart(user),
                                 key: 'view-cart',
                               },
-                              'View Cart',
+                              'Cart',
                             ),
                             React.createElement(
                               CButton,
@@ -481,7 +568,7 @@ const UserList = () => {
                                 onClick: () => handleViewOrders(user),
                                 key: 'view-orders',
                               },
-                              'Order History',
+                              'Orders',
                             ),
                           ],
                         ),
@@ -583,6 +670,16 @@ const UserList = () => {
       loading: ordersLoading,
       error: ordersError,
       key: 'orders-modal',
+    }),
+
+    // Delete Confirmation Modal
+    React.createElement(ConfirmDeleteModal, {
+      visible: showDeleteModal,
+      onConfirm: handleDeleteConfirm,
+      onCancel: handleDeleteCancel,
+      loading: deleteLoading,
+      itemName: userToDelete?.fullName || 'this user',
+      key: 'delete-modal',
     }),
   )
 }

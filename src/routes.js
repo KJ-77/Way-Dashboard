@@ -1,5 +1,5 @@
 import React from 'react'
-import { UserList, UserDetail } from './layout/UserManagement'
+import { UserList, UserDetail, UserForm } from './layout/UserManagement'
 import { Navigate } from 'react-router-dom'
 
 // Lazy loaded components
@@ -163,6 +163,16 @@ const routes = [
     path: '/users',
     name: 'User Management',
     element: UserList,
+  },
+  {
+    path: '/users/new',
+    name: 'Create User',
+    element: UserForm,
+  },
+  {
+    path: '/users/:id/edit',
+    name: 'Edit User',
+    element: UserForm,
   },
   {
     path: '/users/:id/view',
